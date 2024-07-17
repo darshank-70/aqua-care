@@ -5,6 +5,8 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const authController = require("./controllers/auth/authController");
+const productController = require("./controllers/products/productController");
+const cartController = require("./controllers/cart/cartController");
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -27,4 +29,11 @@ mongoose
 app.get("/", (req, res, next) => {
   res.status(200).send("Hello World");
 });
+// Endpoints
+// 1. auth
+// 2. products
+// 3. cart
+//
 app.use("/auth", authController);
+app.use("/products", productController);
+app.use("/cart", cartController);

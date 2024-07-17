@@ -48,7 +48,9 @@ router.post("/login", async (req, res, next) => {
       existingCustomer.customerPassword
     );
     if (isPasswordMatch)
-      return res.status(200).json({ message: "Login Successful" });
+      return res
+        .status(200)
+        .json({ message: "Login Successful", existingCustomer });
   }
   //   login failed
   return res.status(400).json({ message: "Email or Password Incorrect" });
