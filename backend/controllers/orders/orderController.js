@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const Order = require("../../models/order");
+const Cart = require("../../models/cart");
 
 const router = express.Router();
 
@@ -10,16 +11,28 @@ const router = express.Router();
 
 // ROutes
 // 1. POST - PlaceOrder
-// 2. PATCH - CancelOrder
+// 2. DELETE - CancelOrder
+// 3. GET - customerOrders
+// 4. PATCH - updateOrder
 
 const placeOrder = async (req, res) => {
-  const { customerId, products, totalAmount, deliveryLocation } = req.body;
+  const { customerId, totalAmount, deliveryLocation } = req.body;
+  const cartItems = await Cart.find({ customerId });
+  // cartItems array's element will have productId,quantity
+
+  if (!cartItems || cartItems.length === 0) {
+    return res
+      .status(404)
+      .json({ message: "No items in the cart to place an order" });
+  }
+
   try {
     const newOrder = new Order({
       customerId,
-      products,
+      cartItems,
       totalAmount,
       deliveryLocation,
+      status: "ordered",
     });
     const ordered = await newOrder.save();
     res.status(200).json(ordered);
@@ -27,13 +40,13 @@ const placeOrder = async (req, res) => {
     res.status(500).json({ message: "could not place a Order,server Error" });
   }
 };
-const cancelOrder = async (req, res) => {
+const updateOrder = async (req, res) => {
   const { orderId } = req.params;
-
+  const { status } = req.body;
   try {
     const order = await Order.findByIdAndUpdate(
       orderId,
-      { status: "canceled" },
+      { status: status },
       { new: true }
     );
     if (!order) {
@@ -61,11 +74,30 @@ const getCustomerOrders = async (req, res) => {
       .json({ message: "Error retrieving customer orders", error });
   }
 };
+// admin can get All orders
+const getAllOrders = async (req, res) => {
+  try {
+    const allOrders = await Order.find().populate(
+      "customerId cartItems.productId"
+    );
+
+    if (!allOrders || allOrders.length === 0) {
+      return res.status(404).json({ message: "No orders found" });
+    }
+
+    res.status(200).json(allOrders);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
 // 1.
 router.post("/", placeOrder);
 // 2.
-router.patch("/cancel/:orderId", cancelOrder);
+router.patch("/update/:orderId", updateOrder);
 // 3.
+router.get("/", getAllOrders);
+// 4.
 router.get("/:customerId", getCustomerOrders);
 
 module.exports = router;

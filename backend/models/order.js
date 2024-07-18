@@ -7,19 +7,38 @@ const orderSchema = new mongoose.Schema(
       ref: "Customer",
       required: true,
     },
-    deliveryLocation: { type: String, required: true },
-    products: [
+    cartItems: [
       {
+        customerId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Customer",
+          required: true,
+        },
         productId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Product",
           required: true,
         },
-        quantity: { type: Number, required: true, min: 1 },
+        quantity: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
       },
     ],
-    totalAmount: { type: Number, required: true },
-    status: { type: String, enum: ["ordered", "canceled"], default: "ordered" },
+    deliveryLocation: {
+      type: String,
+      required: true,
+    },
+    totalAmount: {
+      type: Number,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ["ordered", "canceled", "delivered"],
+      default: "ordered",
+    },
   },
   { timestamps: true }
 );

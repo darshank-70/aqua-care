@@ -5,19 +5,7 @@ const router = express.Router();
 
 const addProductToCart = async (customerId, productId, quantity) => {
   try {
-    let cart = await Cart.findOne({ customerId });
-    if (!cart) {
-      cart = new Cart({ customerId, products: [] });
-    }
-
-    const productIndex = cart.products.findIndex(
-      (p) => p.productId.toString() === productId
-    );
-    if (productIndex > -1) {
-      cart.products[productIndex].quantity += quantity;
-    } else {
-      cart.products.push({ productId, quantity });
-    }
+    let cart = new Cart({ customerId, productId, quantity });
 
     await cart.save();
     return cart;
@@ -28,13 +16,7 @@ const addProductToCart = async (customerId, productId, quantity) => {
 
 const removeProductFromCart = async (customerId, productId) => {
   try {
-    let cart = await Cart.findOne({ customerId });
-    if (cart) {
-      cart.products = cart.products.filter(
-        (p) => p.productId.toString() !== productId
-      );
-      await cart.save();
-    }
+    let cart = await Cart.findOneAndDelete({ customerId, productId });
     return cart;
   } catch (error) {
     console.error("Error removing product from cart:", error);
@@ -42,9 +24,7 @@ const removeProductFromCart = async (customerId, productId) => {
 };
 const viewCart = async (customerId) => {
   try {
-    const cart = await Cart.findOne({ customerId }).populate(
-      "products.productId"
-    );
+    const cart = await Cart.find({ customerId }).populate("productId");
     return cart;
   } catch (error) {
     console.error("Error viewing cart:", error);
@@ -52,12 +32,13 @@ const viewCart = async (customerId) => {
 };
 
 // Routes
-// 1. add to cart
-// 2. remove from cart
-// 3. get Cart for customer
+// 1.POST  add to cart
+// 2.DELETE remove from cart
+// 3.GET get Cart for customer
+// 4.PATCH update Cart[only quantity can be updated ]
 
 // 1
-router.post("/add", async (req, res, next) => {
+router.post("/", async (req, res, next) => {
   const { customerId, productId, quantity } = req.body;
   try {
     const cart = await addProductToCart(customerId, productId, quantity);
@@ -67,10 +48,13 @@ router.post("/add", async (req, res, next) => {
   }
 });
 // 2
-router.post("/remove", async (req, res) => {
+router.delete("/remove", async (req, res) => {
   const { customerId, productId } = req.body;
   try {
     const cart = await removeProductFromCart(customerId, productId);
+    if (!cart) {
+      return res.status(404).json({ message: "Cart item not found" });
+    }
     res.status(200).json({ cart });
   } catch (error) {
     res
@@ -89,5 +73,27 @@ router.get("/:customerId", async (req, res) => {
     res.status(500).json({ message: "Error viewing cart", error });
   }
 });
+// 4
+router.patch("/", async (req, res) => {
+  const { customerId, productId, quantity } = req.body;
+  try {
+    // Find and update the cart item
+    const updatedCartItem = await Cart.findOneAndUpdate(
+      { customerId, productId },
+      { quantity },
+      { new: true }
+    );
 
+    if (!updatedCartItem) {
+      return res.status(404).json({ message: "Cart item not found" });
+    }
+
+    res.status(200).json({
+      message: "Quantity updated successfully",
+      cartItem: updatedCartItem,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating quantity", error });
+  }
+});
 module.exports = router;
