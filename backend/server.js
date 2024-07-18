@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 const authController = require("./controllers/auth/authController");
 const productController = require("./controllers/products/productController");
 const cartController = require("./controllers/cart/cartController");
+const orderController = require("./controllers/orders/orderController");
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -37,3 +38,4 @@ app.get("/", (req, res, next) => {
 app.use("/auth", authController);
 app.use("/products", productController);
 app.use("/cart", cartController);
+app.use("/orders", orderController);
