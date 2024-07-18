@@ -13,7 +13,7 @@ const router = express.Router();
 // 1. GET - Get all products
 router.get("/", async (req, res) => {
   try {
-    const products = await Product.find({});
+    const products = await Product.find();
     res.status(200).json(products);
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
